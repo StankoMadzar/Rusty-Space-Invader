@@ -43,6 +43,7 @@ fn main() -> Result <()> {
     let mut player = Player::new();
     let mut instant = Instant::now();
     'gameloop: loop {
+        
         //Per-frame init
         let mut delta = instant.elapsed();
         instant = Instant::now();

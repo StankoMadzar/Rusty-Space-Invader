@@ -1,7 +1,5 @@
 use std::time::Duration;
-
 use rusty_time::timer::Timer;
-
 use crate::frame::Drawable;
 
 pub struct Shot {
@@ -28,7 +26,6 @@ impl Shot {
                 self.y -= 1;
             }
             self.timer.reset();
-
         }
     }
 
