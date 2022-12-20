@@ -1,6 +1,6 @@
 use std::{error::Error, time::{Duration, Instant}, sync::mpsc};
 use crossterm::{*, terminal::{LeaveAlternateScreen, EnterAlternateScreen}, cursor::{Hide, Show}, event::{KeyCode, Event}};
-use invaders::{frame::{self, new_frame, Drawable}, render, player::Player};
+use invaders::{frame::{self, new_frame, Drawable}, render, player::Player, invaders::Invaders};
 use rusty_audio::Audio;
 use std::io;
 use std::thread;
@@ -42,10 +42,11 @@ fn main() -> Result <()> {
     //Game Loop
     let mut player = Player::new();
     let mut instant = Instant::now();
+    let mut invaders = Invaders::new();
     'gameloop: loop {
-        
+
         //Per-frame init
-        let mut delta = instant.elapsed();
+        let delta = instant.elapsed();
         instant = Instant::now();
         let mut curr_frame = new_frame();
         
@@ -71,11 +72,34 @@ fn main() -> Result <()> {
 
         //Updates
         player.update(delta);
+        if invaders.update(delta) {
+            audio.play("move");
+        }
+
+        if player.detect_hits(&mut invaders) {
+            audio.play("explode");
+        }
 
         //Draw & render 
-        player.draw(&mut curr_frame);
+        //player.draw(&mut curr_frame);
+        //invaders.draw(&mut curr_frame);
+        let drawables: Vec<&dyn Drawable> = vec![&player, &invaders];
+        for drawable in drawables {
+            drawable.draw(&mut curr_frame);
+        }
         let _ = render_tx.send(curr_frame);
         thread::sleep(Duration::from_millis(1));
+
+        //Win or lose?
+        if invaders.all_killed() {
+            audio.play("win");
+            break 'gameloop;
+        }
+
+        if invaders.reached_bottom() {
+            audio.play("lose");
+            break 'gameloop;
+        }
     }
 
     //Cleanup
